@@ -110,7 +110,12 @@ def gendevice(dev_type, host, mac, name=None, is_locked=None):
     )
 
 
-def discover(timeout=None, local_ip_address=None, discover_ip_address='255.255.255.255'):
+def discover(
+        timeout=None,
+        local_ip_address=None,
+        discover_ip_address='255.255.255.255',
+        discover_ip_port=80
+):
     if local_ip_address is None:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(('8.8.8.8', 53))  # connecting to a UDP address doesn't send packets
@@ -162,7 +167,7 @@ def discover(timeout=None, local_ip_address=None, discover_ip_address='255.255.2
     packet[0x20] = checksum & 0xff
     packet[0x21] = checksum >> 8
 
-    cs.sendto(packet, (discover_ip_address, 80))
+    cs.sendto(packet, (discover_ip_address, discover_ip_port))
     if timeout is None:
         response = cs.recvfrom(1024)
         responsepacket = bytearray(response[0])
@@ -447,7 +452,7 @@ class bg1(device):
 
     def get_state(self):
         """Get state of device.
-        
+
         Returns:
             dict: Dictionary of current state
             eg. `{"pwr":1,"pwr1":1,"pwr2":0,"maxworktime":60,"maxworktime1":60,"maxworktime2":0,"idcbrightness":50}`"""
