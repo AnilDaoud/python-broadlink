@@ -116,15 +116,25 @@ def discover(
         discover_ip_port=80
 ):
     if local_ip_address is None:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            s.connect(('8.8.8.8', 53))  # connecting to a UDP address doesn't send packets
-            local_ip_address = s.getsockname()[0]
+        local_ip_set = set([x[4][0] for x in socket.getaddrinfo(socket.gethostname(),None,family=socket.AF_INET) if not x[4][0].startswith('127.')])
+    else:
+        local_ip_set = set([local_ip_address])
 
-    address = local_ip_address.split('.')
     cs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     cs.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    cs.bind((local_ip_address, 0))
+    address = ''
+    for local_ip_address in local_ip_set:
+        try:
+            address = local_ip_address.split('.')
+            cs.bind((local_ip_address, 0))
+            break
+        except Exception as e:
+            print("%s: %s" % (str(e), i))
+            pass
+    if address == '':
+        print("Could not find local ip address to bind to")
+        return []
     port = cs.getsockname()[1]
     starttime = time.time()
 
